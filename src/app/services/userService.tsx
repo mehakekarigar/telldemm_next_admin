@@ -37,7 +37,11 @@ interface ApiResponse {
   };
 }
 
-const API_BASE_URL = "https://telldemm-backend.onrender.com";
+// const API_BASE_URL = "https://telldemm-backend.onrender.com";
+const API_BASE_URL = "https://apps.ekarigar.com/backend";
+// const API_BASE_URL = "http://localhost:5000";
+
+
 
 const getAuthHeaders = () => {
   const token = Cookies.get("auth_token");

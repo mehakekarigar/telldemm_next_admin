@@ -1,196 +1,103 @@
-// src/app/messages/BlankPage.tsx
 "use client";
 
-import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import React, { useEffect, useState } from "react";
-import { fetchMessages } from "../services/apiService";
-import { DataTable } from "@/components/ui/data-table/data-table"; // Adjust path
+import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-// import { Button } from "@/components/ui/button"; // Adjust path
-import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { DataTable } from "@/components/ui/data-table/data-table";
 import Button from "@/components/ui/button/Button";
+// import { Button } from "@/components/ui/button";
 
-// Define the ApiMessage type based on apiService.ts
+// Define the shape of your data
 interface ApiMessage {
-  message_id: number;
-  sender: string;
-  recipient: string;
-  message: string;
-  timestamp: string;
-  status: string;
-  actions: string[];
+  user_id: number;
+  name: string;
+  phone_number: string;
+  last_logged_in: string;
+  status: boolean;
 }
 
-// Define columns for the DataTable
+// ✅ Static dataset
+const staticMessages: ApiMessage[] = [
+  {
+    user_id: 1,
+    name: "Alice",
+    phone_number: "+91 9876543210",
+    last_logged_in: "2025-09-13T17:23:48.000Z",
+    status: true,
+  },
+  {
+    user_id: 2,
+    name: "Bob",
+    phone_number: "+91 9123456780",
+    last_logged_in: "2025-09-14T09:12:30.000Z",
+    status: false,
+  },
+  {
+    user_id: 3,
+    name: "Charlie",
+    phone_number: "+91 9988776655",
+    last_logged_in: "2025-09-15T11:45:00.000Z",
+    status: true,
+  },
+];
+
+// ✅ Table columns
 const columns: ColumnDef<ApiMessage>[] = [
   {
-    accessorKey: "message_id",
-    header: ({ column }) => (
-      <div
-        className="flex items-center space-x-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        <span>ID</span>
-        {{
-          asc: <ArrowUp className="h-4 w-4" />,
-          desc: <ArrowDown className="h-4 w-4" />,
-          false: <ArrowUpDown className="h-4 w-4" />,
-        }[column.getIsSorted() as string] || <ArrowUpDown className="h-4 w-4" />}
-      </div>
-    ),
-    cell: ({ row }) => <div>{row.getValue("message_id")}</div>,
-    enableSorting: true,
+    accessorKey: "user_id",
+    header: "ID",
   },
   {
-    accessorKey: "sender",
-    header: ({ column }) => (
-      <div
-        className="flex items-center space-x-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        <span>Sender</span>
-        {{
-          asc: <ArrowUp className="h-4 w-4" />,
-          desc: <ArrowDown className="h-4 w-4" />,
-          false: <ArrowUpDown className="h-4 w-4" />,
-        }[column.getIsSorted() as string] || <ArrowUpDown className="h-4 w-4" />}
-      </div>
-    ),
-    cell: ({ row }) => <div>{row.getValue("sender")}</div>,
-    enableSorting: true,
+    accessorKey: "name",
+    header: "Name",
   },
   {
-    accessorKey: "recipient",
-    header: ({ column }) => (
-      <div
-        className="flex items-center space-x-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        <span>Recipient</span>
-        {{
-          asc: <ArrowUp className="h-4 w-4" />,
-          desc: <ArrowDown className="h-4 w-4" />,
-          false: <ArrowUpDown className="h-4 w-4" />,
-        }[column.getIsSorted() as string] || <ArrowUpDown className="h-4 w-4" />}
-      </div>
-    ),
-    cell: ({ row }) => <div>{row.getValue("recipient")}</div>,
-    enableSorting: true,
+    accessorKey: "phone_number",
+    header: "Phone",
   },
   {
-    accessorKey: "message",
-    header: "Message",
-    cell: ({ row }) => <div className="truncate max-w-xs">{row.getValue("message")}</div>,
-    enableSorting: false,
-  },
-  {
-    accessorKey: "timestamp",
-    header: ({ column }) => (
-      <div
-        className="flex items-center space-x-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        <span>Timestamp</span>
-        {{
-          asc: <ArrowUp className="h-4 w-4" />,
-          desc: <ArrowDown className="h-4 w-4" />,
-          false: <ArrowUpDown className="h-4 w-4" />,
-        }[column.getIsSorted() as string] || <ArrowUpDown className="h-4 w-4" />}
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div>{new Date(row.getValue("timestamp")).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}</div>
-    ),
-    enableSorting: true,
+    accessorKey: "last_logged_in",
+    header: "Last Login",
+    cell: ({ row }) => {
+      const dt = new Date(row.original.last_logged_in);
+      return dt.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+    },
   },
   {
     accessorKey: "status",
-    header: ({ column }) => (
-      <div
-        className="flex items-center space-x-2 cursor-pointer"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+    header: "Status",
+    cell: ({ row }) => (
+      <span
+        className={`px-2 py-1 rounded text-xs ${
+          row.original.status ? "bg-green-200 text-green-700" : "bg-red-200 text-red-700"
+        }`}
       >
-        <span>Status</span>
-        {{
-          asc: <ArrowUp className="h-4 w-4" />,
-          desc: <ArrowDown className="h-4 w-4" />,
-          false: <ArrowUpDown className="h-4 w-4" />,
-        }[column.getIsSorted() as string] || <ArrowUpDown className="h-4 w-4" />}
-      </div>
+        {row.original.status ? "Active" : "Inactive"}
+      </span>
     ),
-    cell: ({ row }) => <div>{row.getValue("status")}</div>,
-    enableSorting: true,
   },
   {
     id: "actions",
     header: "Actions",
-    cell: ({ row }) => {
-      const actions = row.original.actions;
-      return (
-        <div className="flex gap-2">
-          {actions.includes("view") && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => alert(`View message ${row.getValue("message_id")}`)}
-            >
-              View
-            </Button>
-          )}
-          {actions.includes("delete") && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-red-500 border-red-500 hover:bg-red-50"
-              onClick={() => alert(`Delete message ${row.getValue("message_id")}`)}
-            >
-              Delete
-            </Button>
-          )}
-        </div>
-      );
-    },
-    enableSorting: false,
+    cell: ({ row }) => (
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => alert(`Force logout user ${row.original.user_id}`)}
+      >
+        Force Logout
+      </Button>
+    ),
   },
 ];
 
-export default function BlankPage() {
-  const [messages, setMessages] = useState<ApiMessage[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Fetch messages
-  const loadMessages = async () => {
-    setLoading(true);
-    try {
-      const response = await fetchMessages();
-      setMessages(response);
-      setLoading(false);
-    } catch {
-      setError("Failed to fetch messages. Please try again.");
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadMessages();
-  }, []);
+// ✅ Static page component
+export default function MessagesPage() {
+  const [data] = useState<ApiMessage[]>(staticMessages);
 
   return (
-    <div>
-      <PageBreadcrumb pageTitle="Messages" />
-      <div className="min-h-screen rounded-2xl border border-gray-200 bg-white px-5 py-7 dark:border-gray-800 dark:bg-white/[0.03] xl:px-10 xl:py-12">
-        <div className="mx-auto w-full max-w-[1200px]">
-          <h3 className="mb-4 font-semibold text-gray-800 text-theme-xl dark:text-white/90 sm:text-2xl">
-            Messages
-          </h3>
-          {loading && <p className="text-gray-500">Loading messages...</p>}
-          {error && <p className="text-red-500">{error}</p>}
-          {!loading && !error && (
-            <DataTable columns={columns} data={messages} />
-          )}
-        </div>
-      </div>
+    <div className="p-6 space-y-6">
+      <h1 className="text-2xl font-bold">User Messages (Static View)</h1>
+      <DataTable columns={columns} data={data} />
     </div>
   );
 }

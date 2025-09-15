@@ -74,11 +74,11 @@ const navItems: NavItem[] = [
     name: "Users",
     path: "/users",
   },
-  {
-    icon: <PlugInIcon />,
-    name: "Messages",
-    path: "/messages",
-  },
+  // {
+  //   icon: <PlugInIcon />,
+  //   name: "Messages",
+  //   path: "/messages",
+  // },
   {
     icon: <BoxCubeIcon />,
     name: "Notifications",
