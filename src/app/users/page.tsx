@@ -49,8 +49,8 @@ export default function UserTablePage() {
   return (
     <div>
       <PageBreadcrumb pageTitle="User Table" />
-      <div className="min-h-screen rounded-2xl border border-gray-200 bg-white px-5 py-7 dark:border-gray-800 dark:bg-white/[0.03] xl:px-10 xl:py-12">
-        <div className="mx-auto w-full max-w-[1140px]">
+      <div className="min-h-screen rounded-2xl border border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-white/[0.03]">
+        <div className="mx-auto w-full max-w-[1440px]">
           <h3 className="mb-4 font-semibold text-gray-800 text-theme-xl dark:text-white/90 sm:text-2xl">Users</h3>
           {loading ? (
             <p>Loading...</p>

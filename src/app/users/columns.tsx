@@ -3,7 +3,7 @@
 
 import Badge from "@/components/ui/badge/Badge";
 import { ColumnDef, RowData } from "@tanstack/react-table";
-import { formatDistanceToNow, parseISO } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 import { forceLogoutUser } from "../services/apiService";
 import Button from "@/components/ui/button/Button";
 
@@ -31,23 +31,34 @@ export type User = {
   last_logged_in: string | null;
 };
 
-const mapStatusBadge = (
-  status: string
-): { label: string; color: "success" | "warning" | "error" } => {
-  switch ((status || "").toLowerCase()) {
-    case "verified":
-      return { label: "Active", color: "success" };
-    case "pending_otp":
-    case "unverified":
-      return { label: "Inactive", color: "warning" };
-    case "blocked":
-      return { label: "Blocked", color: "error" };
-    default:
-      return { label: "Inactive", color: "warning" };
-  }
-};
+// const mapStatusBadge = (
+//   status: string
+// ): { label: string; color: "success" | "warning" | "error" } => {
+//   switch ((status || "").toLowerCase()) {
+//     case "verified":
+//       return { label: "Active", color: "success" };
+//     case "pending_otp":
+//     case "unverified":
+//       return { label: "Inactive", color: "warning" };
+//     case "blocked":
+//       return { label: "Blocked", color: "error" };
+//     default:
+//       return { label: "Inactive", color: "warning" };
+//   }
+// };
 
 // Formatter for IST absolute strings
+// const istFormatter = new Intl.DateTimeFormat("en-GB", {
+//   timeZone: "Asia/Kolkata",
+//   year: "numeric",
+//   month: "short",
+//   day: "2-digit",
+//   hour: "2-digit",
+//   minute: "2-digit",
+//   second: "2-digit",
+//   hour12: true,
+// });
+
 const istFormatter = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Asia/Kolkata",
   year: "numeric",
@@ -59,47 +70,10 @@ const istFormatter = new Intl.DateTimeFormat("en-GB", {
   hour12: true,
 });
 
-// replace your safeParseDate with this implementation
 function safeParseDate(ts: string | null): Date | null {
-
-  // console.log();
   if (!ts) return null;
-  try {
-    const s = String(ts).trim();
-
-    // If it has a timezone indicator (Z or ±HH:mm), parse as ISO (UTC-aware)
-    if (/[zZ]|[+\-]\d{2}:\d{2}$/.test(s)) {
-      const d = parseISO(s);
-      return isNaN(d.getTime()) ? null : d;
-    }
-
-    // If it looks like "2025-09-15T15:48:18" (T but no zone) -> parseISO (treated as local by parseISO)
-    if (s.includes("T")) {
-      const d = parseISO(s);
-      if (!isNaN(d.getTime())) return d;
-    }
-
-    // If it looks like MySQL "YYYY-MM-DD HH:mm:ss" (space separator, no zone),
-    // treat it as an Asia/Kolkata local timestamp (i.e., the stored value is IST).
-    // We convert that IST local-time into a correct JS Date (which stores UTC internally).
-    const mySqlLike = s.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/);
-    if (mySqlLike) {
-      const [, Y, M, D, h, m, sec] = mySqlLike.map(Number);
-      // Compute UTC milliseconds for the given IST time by subtracting IST offset (5.5h)
-      const istOffsetMs = (5 * 60 + 30) * 60 * 1000; // 19800000
-      const utcMs = Date.UTC(Y, M - 1, D, h, m, sec) - istOffsetMs;
-      const d = new Date(utcMs);
-      return isNaN(d.getTime()) ? null : d;
-    }
-
-    // Fallback: try native Date parsing (may be inconsistent across browsers)
-    const d = new Date(s);
-    return isNaN(d.getTime()) ? null : d;
-  } catch {
-    return null;
-  }
+  return new Date(ts); // always return Date object
 }
-
 
 export const columns: ColumnDef<User>[] = [
   {
@@ -120,14 +94,24 @@ export const columns: ColumnDef<User>[] = [
     accessorKey: "phone_number",
     header: "Phone Number",
   },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => {
-      const { label, color } = mapStatusBadge(row.original.status || "");
-      return <Badge variant="light" color={color}>{label}</Badge>;
-    },
+ {
+  accessorKey: "status",
+  header: "Status",
+  cell: ({ row }) => {
+    const status = (row.original.status || "").toLowerCase();
+
+    switch (status) {
+      case "verified":
+        return <Badge variant="light" color="success">Verified</Badge>;
+      case "blocked":
+        return <Badge variant="light" color="error">Blocked</Badge>;
+      case "pending_otp":
+      case "unverified":
+      default:
+        return <Badge variant="light" color="warning">Unverified</Badge>;
+    }
   },
+},
   {
     accessorKey: "last_seen",
     header: "Last Seen",
