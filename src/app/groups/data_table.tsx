@@ -4,7 +4,7 @@ import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
-  getSortedRowModel, // Import sorting functionality
+  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import {
@@ -21,9 +21,10 @@ interface DataTableProps<TData> {
   columns: ColumnDef<TData>[];
   data: TData[];
   onUpdateGroup?: (id: number | string, updatedRow: TData) => void;
+  onMemberCountClick?: (groupId: number) => void;
 }
 
-export function DataTable<TData>({ columns, data, onUpdateGroup }: DataTableProps<TData>) {
+export function DataTable<TData>({ columns, data, onUpdateGroup, onMemberCountClick }: DataTableProps<TData>) {
   const [tableData, setTableData] = useState<TData[]>(data);
 
   useEffect(() => {
@@ -34,9 +35,10 @@ export function DataTable<TData>({ columns, data, onUpdateGroup }: DataTableProp
     data: tableData,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(), // Enable sorting
+    getSortedRowModel: getSortedRowModel(),
     meta: {
       updateGroup: onUpdateGroup,
+      onMemberCountClick, // Add to meta for column access
     },
   });
 
