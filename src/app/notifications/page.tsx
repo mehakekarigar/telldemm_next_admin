@@ -26,6 +26,7 @@ interface UserOption {
   name: string;
 }
 
+
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [users, setUsers] = useState<UserOption[]>([]);
