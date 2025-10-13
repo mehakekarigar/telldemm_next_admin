@@ -29,17 +29,17 @@ export interface ApiMessage {
   actions: string[]; // e.g., ["view", "delete"]
 };
 
-export interface ApiNotification {
-  id: number;
-  from_user_id: number;
-  from_username: string;
-  to_user_id: number;
-  to_username: string;
-  title: string;
-  message: string;
-  type: string;
-  created_at: string;
-};
+// export interface ApiNotification {
+//   id: number;
+//   from_user_id: number;
+//   from_username: string;
+//   to_user_id: number;
+//   to_username: string;
+//   title: string;
+//   message: string;
+//   type: string;
+//   created_at: string;
+// };
 
 interface ApiResponse {
   success: boolean;
@@ -50,19 +50,62 @@ interface ApiResponse {
   };
 }
 
-interface FetchNotificationsResponse {
-  success: boolean;
+// interface FetchNotificationsResponse {
+//   success: boolean;
+//   message: string;
+//   data: {
+//     notifications: ApiNotification[];
+//     pagination: {
+//       currentPage: number;
+//       totalPages: number;
+//       totalNotifications: number;
+//       limit: number;
+//     };
+//   };
+// }
+
+// interface SendNotificationResponse {
+//   success: boolean;
+//   message: string;
+//   data: {
+//     notification: ApiNotification;
+//     fcm_response: string;
+//   };
+// }
+
+// interface NotificationPayload {
+//   from_user_id: number;
+//   to_user_id: number;
+//   title: string;
+//   message: string;
+//   type: string;
+// }
+
+export interface ApiNotification {
+  id: number;
+  from_user_id: number;
+  from_username: string;
+  to_user_id: number;
+  to_username: string;
+  title: string;
   message: string;
-  data: {
-    notifications: ApiNotification[];
-    pagination: {
-      currentPage: number;
-      totalPages: number;
-      totalNotifications: number;
-      limit: number;
-    };
-  };
+  type: string;
+  created_at: string;
 }
+
+// interface FetchNotificationsResponse {
+//   success: boolean;
+//   message: string;
+//   data: {
+//     notifications: ApiNotification[];
+//     pagination: {
+//       currentPage: number;
+//       totalPages: number;
+//       totalNotifications: number;
+//       limit: number;
+//     };
+//   };
+// }
 
 interface SendNotificationResponse {
   success: boolean;
@@ -73,12 +116,30 @@ interface SendNotificationResponse {
   };
 }
 
+// Updated payload to match Postman (no from_user_id)
 interface NotificationPayload {
-  from_user_id: number;
   to_user_id: number;
   title: string;
   message: string;
   type: string;
+}
+
+// Separate interface for user list (as requested)
+export interface UserListItem {
+  user_id: number;
+  name: string;
+  phone_number: string;
+  email: string | null;
+  profile_picture_url: string | null;
+  status: string;
+  created_at: string;
+  public_key: string | null;
+  key_created_at: string | null;
+  last_seen: string;
+  is_online: boolean;
+  force_logout: number;
+  logged_in_status: number;
+  last_logged_in: string;
 }
 
 // Type definitions
@@ -144,32 +205,66 @@ export const fetchMessages = async (): Promise<ApiMessage[]> => {
   }
 };
 
+// Updated fetchNotifications to match Postman endpoint (/backend/admin/notifications)
+// Supports optional to_user_id for filtering (appended as query param; assumes backend handles it)
+// Updated fetchNotifications to remove success check and handle varying response structures
+// Updated fetchNotifications return type to include pagination always (even if undefined)
+// ./src/app/services/apiService.tsx
+
+// Remove unused FetchNotificationsResponse interface
+
+// Update fetchNotifications to avoid 'any':
 export const fetchNotifications = async (
-  user_id: number,
-  page: number,
-  limit: number
-): Promise<{ notifications: ApiNotification[] }> => {
+  toUserId?: number,
+  page: number = 1,
+  limit: number = 10
+): Promise<{ 
+  notifications: ApiNotification[]; 
+  pagination?: { 
+    currentPage: number; 
+    totalPages: number; 
+    totalNotifications: number; 
+    limit: number; 
+  } 
+}> => {
   try {
-    const response = await axios.get<FetchNotificationsResponse>(
-      `${API_BASE_URL}/api/notification/notifications?user_id=${user_id}&page=${page}&limit=${limit}`,
-      {
-        headers: getAuthHeaders(),
-      }
-    );
-    if (!response.data.success) {
-      throw new Error(response.data.message || "Failed to fetch notifications");
+    let url = `${BASE_URL}/notifications?page=${page}&limit=${limit}`;
+    if (toUserId !== undefined && toUserId !== 0) {
+      url += `&to_user_id=${toUserId}`;
     }
-    return response.data.data;
+    const response = await axios.get(url, {
+      headers: getAuthHeaders(),
+    });
+    // Handle direct array or wrapped data
+    const data = response.data.data || response.data;
+    const notifications = Array.isArray(data) ? data : (data.notifications || []);
+    // Define a type for data to avoid any
+    type ApiData = {
+      notifications?: ApiNotification[];
+      pagination?: {
+        currentPage: number;
+        totalPages: number;
+        totalNotifications: number;
+        limit: number;
+      };
+    };
+    const typedData = data as ApiData;
+    return {
+      notifications: notifications as ApiNotification[],
+      pagination: typedData.pagination,
+    };
   } catch (error) {
     console.error("API Error:", error);
     throw new Error("Failed to fetch notifications. Please try again.");
   }
 };
 
-export const sendNotification = async (payload: NotificationPayload): Promise<ApiNotification> => {
+// Updated sendNotification to match Postman endpoint and payload (no from_user_id)
+// Updated sendNotification to handle the new response structure
+export const sendNotification = async (payload: NotificationPayload): Promise<SendNotificationResponse> => {
   try {
     const response = await axios.post<SendNotificationResponse>(
-      `${API_BASE_URL}/api/notification/send_notification`,
+      `${BASE_URL}/send_notifications`,
       payload,
       {
         headers: {
@@ -178,10 +273,8 @@ export const sendNotification = async (payload: NotificationPayload): Promise<Ap
         },
       }
     );
-    if (!response.data.success) {
-      throw new Error(response.data.message || "Failed to send notification");
-    }
-    return response.data.data.notification;
+    // Assume success if no error thrown by axios; check message if needed
+    return response.data;
   } catch (error) {
     console.error("API Error:", error);
     throw new Error("Failed to send notification. Please try again.");
