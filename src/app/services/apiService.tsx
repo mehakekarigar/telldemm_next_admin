@@ -1,6 +1,26 @@
 
 import axios from "axios";
 import Cookies from "js-cookie"; // Make sure this is installed: npm i js-cookie
+import { ReactNode } from "react";
+
+// Create axios instance
+const apiClient = axios.create();
+
+// Response interceptor to handle 401 errors
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Clear the auth token
+      Cookies.remove("auth_token");
+      // Redirect to login page
+      if (typeof window !== 'undefined') {
+        window.location.href = '/Login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export type ApiUser = {
   user_id: number;
@@ -164,6 +184,33 @@ export type Member = {
   is_active: number;
 };
 
+export type Channel = {
+  creator_name: ReactNode;
+  channel_id: number;
+  channel_name: string;
+  description: string;
+  created_by: string;
+  created_at: string | null;
+  firebase_channel_id: string;
+  channel_dp: string | null;
+  is_public: number;
+  max_members: number;
+  delete_status: number;
+  deleted_at: string | null;
+};
+
+export type ChannelMember = {
+  id: number;
+  channel_id: number;
+  user_id: number;
+  role_id: number;
+  joined_at: string;
+  is_active: number;
+  removed_at: string | null;
+  name: string;
+  email: string | null;
+};
+
 // Add this type near your other interfaces
 export interface ForceLogoutResponse {
   status: boolean;
@@ -180,7 +227,7 @@ const getAuthHeaders = (): Record<string, string> => {
 
 export const fetchUsers = async (): Promise<ApiUser[]> => {
   try {
-    const response = await axios.get<ApiUser[]>(`${API_BASE_URL}/admin/users`, {
+    const response = await apiClient.get<ApiUser[]>(`${API_BASE_URL}/admin/users`, {
       headers: getAuthHeaders(),
     });
     return response.data;
@@ -192,7 +239,7 @@ export const fetchUsers = async (): Promise<ApiUser[]> => {
 
 export const fetchMessages = async (): Promise<ApiMessage[]> => {
   try {
-    const response = await axios.get<ApiResponse>(`${API_BASE_URL}/admin/messages`, {
+    const response = await apiClient.get<ApiResponse>(`${API_BASE_URL}/admin/messages`, {
       headers: getAuthHeaders(),
     });
     if (!response.data.success) {
@@ -232,7 +279,7 @@ export const fetchNotifications = async (
     if (toUserId !== undefined && toUserId !== 0) {
       url += `&to_user_id=${toUserId}`;
     }
-    const response = await axios.get(url, {
+    const response = await apiClient.get(url, {
       headers: getAuthHeaders(),
     });
     // Handle direct array or wrapped data
@@ -263,7 +310,7 @@ export const fetchNotifications = async (
 // Updated sendNotification to handle the new response structure
 export const sendNotification = async (payload: NotificationPayload): Promise<SendNotificationResponse> => {
   try {
-    const response = await axios.post<SendNotificationResponse>(
+    const response = await apiClient.post<SendNotificationResponse>(
       `${BASE_URL}/send_notifications`,
       payload,
       {
@@ -284,21 +331,16 @@ export const sendNotification = async (payload: NotificationPayload): Promise<Se
 // Fetch all groups
 export const fetchGroups = async (): Promise<Group[]> => {
   try {
-    const headers = new Headers({
-      'Content-Type': 'application/json',
-      ...getAuthHeaders(),
+    const response = await apiClient.get(`${BASE_URL}/groups`, {
+      headers: getAuthHeaders(),
     });
 
-    const response = await fetch(`${BASE_URL}/groups`, {
-      method: 'GET',
-      headers: headers,
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    // Handle direct array or wrapped data
+    const data = response.data.data || response.data;
+    if (!Array.isArray(data)) {
+      throw new Error("API request failed.");
     }
 
-    const data: Group[] = await response.json(); // Explicitly type as Group[]
     return data.map((group: Group) => ({
       group_id: group.group_id,
       group_name: group.group_name,
@@ -350,7 +392,7 @@ export const fetchGroupMembers = async (groupId: number): Promise<Member[]> => {
 
 export async function forceLogoutUser(userId: number): Promise<ForceLogoutResponse> {
   try {
-    const res = await axios.post<ForceLogoutResponse>(`${API_BASE_URL}/api/users/force-logout`, {
+    const res = await apiClient.post<ForceLogoutResponse>(`${API_BASE_URL}/api/users/force-logout`, {
       user_id: userId,
     });
     return res.data;
@@ -360,4 +402,54 @@ export async function forceLogoutUser(userId: number): Promise<ForceLogoutRespon
     }
     throw new Error("API call failed");
   }
-}
+};
+
+// Fetch channels with pagination
+export const fetchChannels = async (page: number = 1, limit: number = 10): Promise<{ channels: Channel[]; pagination: { page: number; limit: number; totalPages: number; totalCount: number } }> => {
+  try {
+    const response = await apiClient.get(`${BASE_URL}/channels?page=${page}&limit=${limit}`, {
+      headers: getAuthHeaders(),
+    });
+
+    const data = response.data;
+    return {
+      channels: data.channels,
+      pagination: data.pagination,
+    };
+  } catch (error) {
+    console.error('Error fetching channels:', error);
+    throw error;
+  }
+};
+
+// Fetch channel detail
+export const fetchChannelDetail = async (channelId: number): Promise<Channel> => {
+  try {
+    const response = await apiClient.get(`${BASE_URL}/channels/${channelId}`, {
+      headers: getAuthHeaders(),
+    });
+
+    return response.data.channel;
+  } catch (error) {
+    console.error('Error fetching channel detail:', error);
+    throw error;
+  }
+};
+
+// Fetch channel members with pagination
+export const fetchChannelMembers = async (channelId: number, page: number = 1, limit: number = 15): Promise<{ members: ChannelMember[]; pagination: { page: number; limit: number; totalPages: number; totalCount: number } }> => {
+  try {
+    const response = await apiClient.get(`${BASE_URL}/channels/${channelId}/members?page=${page}&limit=${limit}`, {
+      headers: getAuthHeaders(),
+    });
+
+    const data = response.data;
+    return {
+      members: data.members,
+      pagination: data.pagination,
+    };
+  } catch (error) {
+    console.error(`Error fetching members for channel ${channelId}:`, error);
+    throw error;
+  }
+};

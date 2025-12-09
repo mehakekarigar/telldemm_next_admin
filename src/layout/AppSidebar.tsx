@@ -104,6 +104,15 @@ const navItems: NavItem[] = [
   },
   {
     icon: <PlugInIcon />,
+    name: "Channels",
+    subItems: [
+      { name: "Manage Channels", path: "/channels/manage", pro: false },
+      { name: "Channel Details", path: "/channels/1", pro: false },
+      { name: "Channel Members", path: "/channels/1/members", pro: false },
+    ],
+  },
+  {
+    icon: <PlugInIcon />,
     name: "Moderation",
     subItems: [
       { name: "Content Flags", path: "/moderation/flags", pro: false },

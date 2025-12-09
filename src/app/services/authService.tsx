@@ -1,5 +1,6 @@
 // src/app/services/authService.tsx
 import axios, { AxiosError } from "axios";
+import Cookies from "js-cookie";
 
 interface LoginPayload {
   email: string;

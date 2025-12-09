@@ -27,12 +27,14 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   onUpdateUser?: (userId: number, updatedUser: TData) => void;
+  onMemberCountClick?: (channelId: number) => void;
 }
 
-export function DataTable<TData extends { user_id: number }, TValue>({
+export function DataTable<TData, TValue>({
   columns,
   data,
   onUpdateUser,
+  onMemberCountClick,
 }: DataTableProps<TData, TValue>) {
   const [tableData, setTableData] = useState<TData[]>(data);
 
@@ -61,10 +63,11 @@ export function DataTable<TData extends { user_id: number }, TValue>({
     onSortingChange: setSorting,
     initialState: { pagination: { pageIndex: 0, pageSize: 10 } },
     meta: {
-      updateUser: (userId: number, updatedUser: TData) => {
-        setTableData((prev) => prev.map((u) => (u.user_id === userId ? updatedUser : u)));
-        if (onUpdateUser) onUpdateUser(userId, updatedUser);
-      },
+      updateUser: onUpdateUser ? (userId: number, updatedUser: TData) => {
+        setTableData((prev) => prev.map((u) => ((u as any).user_id === userId ? updatedUser : u)));
+        onUpdateUser(userId, updatedUser);
+      } : undefined,
+      onMemberCountClick,
     },
   });
 
