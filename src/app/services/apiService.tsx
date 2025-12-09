@@ -334,13 +334,13 @@ export const sendNotification = async (payload: NotificationPayload): Promise<Se
 
 // Fetch all groups
 export const fetchGroups = async (): Promise<Group[]> => {
-  try {
-    const response = await apiClient.get<FetchGroupsResponse>(`${BASE_URL}/groups`, {
-      headers: getAuthHeaders(),
-    });
+try {
+  const response = await apiClient.get<FetchGroupsResponse>(`${BASE_URL}/groups`, {
+    headers: getAuthHeaders(),
+  });
 
-    const groups = response.data.data;
-    return groups.map((group: Group) => ({
+  const data: Group[] = response.data.data || response.data; // Explicitly type as Group[]
+  return data.map((group: Group) => ({
       group_id: group.group_id,
       group_name: group.group_name,
       creator_name: group.creator_name,

@@ -6,9 +6,10 @@ import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { columns, Channel } from "./columns";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { fetchChannels } from "../../services/apiService";
-import router from "next/router";
+import { useRouter } from "next/navigation";
 
 export default function ChannelTablePage() {
+  const router = useRouter();
   const [data, setData] = useState<Channel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
