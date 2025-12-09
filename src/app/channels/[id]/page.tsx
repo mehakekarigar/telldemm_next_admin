@@ -88,7 +88,7 @@ export default function ChannelDetailPage() {
       cell: ({ row }) => (
         <div className="flex items-center">
           {row.original.channel_dp ? (
-                  <img src={row.original.channel_dp} alt="Channel DP" className="w-16 h-16 rounded-full" />
+                  <Image src={row.original.channel_dp} alt="Channel DP" className="w-16 h-16 rounded-full" />
                 ) : (
             "No DP"
           )}
