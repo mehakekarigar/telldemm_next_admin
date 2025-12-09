@@ -3,8 +3,9 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { Row } from "@tanstack/react-table";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { columns, ChannelMember } from "../../manage/columns";
+import { ChannelMember } from "../../manage/columns";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { fetchChannelMembers } from "../../../services/apiService";
 
@@ -57,7 +58,7 @@ export default function ChannelMembersPage() {
     {
       id: "sequential_id",
       header: "S.No",
-      cell: ({ row }: any) => row.index + 1,
+      cell: ({ row }: { row: Row<ChannelMember> }) => row.index + 1,
       enableSorting: false,
     },
     {
@@ -89,7 +90,7 @@ export default function ChannelMembersPage() {
     {
       accessorKey: "joined_at",
       header: "Joined At",
-      cell: ({ row }: any) => {
+      cell: ({ row }: { row: Row<ChannelMember> }) => {
         const ts = row.original.joined_at;
         const d = ts ? new Date(ts) : null;
         if (!d) return "Never";
@@ -103,7 +104,7 @@ export default function ChannelMembersPage() {
     {
       accessorKey: "is_active",
       header: "Active",
-      cell: ({ row }: any) => (row.original.is_active ? "Yes" : "No"),
+      cell: ({ row }: { row: Row<ChannelMember> }) => (row.original.is_active ? "Yes" : "No"),
     },
   ];
 

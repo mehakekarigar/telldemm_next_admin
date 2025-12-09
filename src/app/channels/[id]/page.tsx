@@ -3,8 +3,12 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Image from "next/image";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { fetchChannelDetail, Channel } from "../../services/apiService";
+import { DataTable } from "@/components/ui/data-table/data-table";
+import { ColumnDef } from "@tanstack/react-table";
+import { formatDistanceToNow } from "date-fns";
 
 export default function ChannelDetailPage() {
   const params = useParams();
@@ -71,101 +75,103 @@ export default function ChannelDetailPage() {
     );
   }
 
+  const channelColumns: ColumnDef<Channel>[] = [
+    {
+      id: "sequential_id",
+      header: "S.No",
+      cell: ({ row }) => row.index + 1,
+      enableSorting: false,
+    },
+    {
+      accessorKey: "channel_dp",
+      header: "Channel DP",
+      cell: ({ row }) => (
+        <div className="flex items-center">
+          {row.original.channel_dp ? (
+                  <img src={row.original.channel_dp} alt="Channel DP" className="w-16 h-16 rounded-full" />
+                ) : (
+            "No DP"
+          )}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "channel_id",
+      header: "Channel ID",
+    },
+    {
+      accessorKey: "channel_name",
+      header: "Channel Name",
+    },
+    {
+      accessorKey: "description",
+      header: "Description",
+    },
+    {
+      accessorKey: "creator_name",
+      header: "Creator Name",
+    },
+    {
+      accessorKey: "created_by",
+      header: "Created By",
+    },
+    {
+      accessorKey: "created_at",
+      header: "Created At",
+      cell: ({ row }) => {
+        const ts = row.original.created_at;
+        const d = ts ? new Date(ts) : null;
+        if (!d) return "N/A";
+        try {
+          const relative = formatDistanceToNow(d, { addSuffix: true });
+          return relative;
+        } catch {
+          return "Invalid date";
+        }
+      },
+    },
+    {
+      accessorKey: "firebase_channel_id",
+      header: "Firebase Channel ID",
+    },
+    {
+      accessorKey: "is_public",
+      header: "Is Public",
+      cell: ({ row }) => (row.original.is_public ? "Yes" : "No"),
+    },
+    {
+      accessorKey: "max_members",
+      header: "Max Members",
+    },
+    {
+      accessorKey: "delete_status",
+      header: "Delete Status",
+      cell: ({ row }) => (row.original.delete_status ? "Deleted" : "Active"),
+    },
+    {
+      accessorKey: "deleted_at",
+      header: "Deleted At",
+      cell: ({ row }) => {
+        const ts = row.original.deleted_at;
+        const d = ts ? new Date(ts) : null;
+        if (!d) return "N/A";
+        try {
+          const relative = formatDistanceToNow(d, { addSuffix: true });
+          return relative;
+        } catch {
+          return "Invalid date";
+        }
+      },
+    },
+  ];
+
   return (
     <div>
       <PageBreadcrumb pageTitle="Channel Detail" />
       <div className="min-h-screen rounded-2xl border border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-white/[0.03]">
-        <div className="mx-auto w-full max-w-[1440px]">
-          <h3 className="mb-4 font-semibold text-gray-800 text-theme-xl dark:text-white/90 sm:text-2xl">
-            Channel Details
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Channel DP
-              </label>
-              <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                {channel.channel_dp ? (
-                  <img src={channel.channel_dp} alt="Channel DP" className="w-16 h-16 rounded-full" />
-                ) : (
-                  "No DP"
-                )}
-              </p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Channel ID
-              </label>
-              <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">{channel.channel_id}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Channel Name
-              </label>
-              <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">{channel.channel_name}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Description
-              </label>
-              <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">{channel.description}</p>
-            </div>
-             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Creator Name
-              </label>
-              <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">{channel.creator_name
-}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Created By
-              </label>
-              <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">{channel.created_by}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Created At
-              </label>
-              <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                {channel.created_at ? new Date(channel.created_at).toLocaleString() : "N/A"}
-              </p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Firebase Channel ID
-              </label>
-              <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">{channel.firebase_channel_id}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Is Public
-              </label>
-              <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">{channel.is_public ? "Yes" : "No"}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Max Members
-              </label>
-              <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">{channel.max_members}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Delete Status
-              </label>
-              <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">{channel.delete_status ? "Deleted" : "Active"}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Deleted At
-              </label>
-              <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                {channel.deleted_at ? new Date(channel.deleted_at).toLocaleString() : "N/A"}
-              </p>
-            </div>
-          </div>
-        </div>
+        <DataTable columns={channelColumns} data={[channel]} />
       </div>
     </div>
   );
 }
+    

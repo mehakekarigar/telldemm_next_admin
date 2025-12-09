@@ -136,6 +136,10 @@ interface SendNotificationResponse {
   };
 }
 
+interface FetchGroupsResponse {
+  data: Group[];
+}
+
 // Updated payload to match Postman (no from_user_id)
 interface NotificationPayload {
   to_user_id: number;
@@ -331,17 +335,12 @@ export const sendNotification = async (payload: NotificationPayload): Promise<Se
 // Fetch all groups
 export const fetchGroups = async (): Promise<Group[]> => {
   try {
-    const response = await apiClient.get(`${BASE_URL}/groups`, {
+    const response = await apiClient.get<FetchGroupsResponse>(`${BASE_URL}/groups`, {
       headers: getAuthHeaders(),
     });
 
-    // Handle direct array or wrapped data
-    const data = response.data.data || response.data;
-    if (!Array.isArray(data)) {
-      throw new Error("API request failed.");
-    }
-
-    return data.map((group: Group) => ({
+    const groups = response.data.data;
+    return groups.map((group: Group) => ({
       group_id: group.group_id,
       group_name: group.group_name,
       creator_name: group.creator_name,

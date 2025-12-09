@@ -64,7 +64,7 @@ export function DataTable<TData, TValue>({
     initialState: { pagination: { pageIndex: 0, pageSize: 10 } },
     meta: {
       updateUser: onUpdateUser ? (userId: number, updatedUser: TData) => {
-        setTableData((prev) => prev.map((u) => ((u as any).user_id === userId ? updatedUser : u)));
+        setTableData((prev) => prev.map((u) => ((u as TData & { user_id: number }).user_id === userId ? updatedUser : u)));
         onUpdateUser(userId, updatedUser);
       } : undefined,
       onMemberCountClick,
