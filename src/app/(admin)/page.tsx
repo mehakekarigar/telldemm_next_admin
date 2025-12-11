@@ -1,11 +1,7 @@
-// import type { Metadata } from "next";
-// import { EcommerceMetrics } from "@/components/ecommerce/EcommerceMetrics";
-// import React from "react";
-// import MonthlyTarget from "@/components/ecommerce/MonthlyTarget";
-// import MonthlySalesChart from "@/components/ecommerce/MonthlySalesChart";
-// import StatisticsChart from "@/components/ecommerce/StatisticsChart";
-// import RecentOrders from "@/components/ecommerce/RecentOrders";
-// import DemographicCard from "@/components/ecommerce/DemographicCard";
+// app/dashboard/page.tsx  (or wherever this Dashboard component lives)
+
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 import MessageActivity from "./components/MessageActivity";
 import MetricsCards from "./components/MetricsCards";
@@ -13,51 +9,50 @@ import Notifications from "./components/Notifications";
 import QuickActions from "./components/QuickActions";
 import UserManagement from "./components/UserManagement";
 
-// export const metadata: Metadata = {
-//   title:
-//     "Next.js E-commerce Dashboard | TailAdmin - Next.js Dashboard Template",
-//   description: "This is Next.js Home for TailAdmin Dashboard Template",
-// };
+// 🔐 Helper to validate token using your backend
+async function validateToken(token: string) {
+  try {
+    const res = await fetch("https://apps.ekarigar.com/backend/admin/users", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      cache: "no-store", // don’t cache auth check
+    });
 
-// export default function Ecommerce() {
-//   return (
-//     <div className="grid grid-cols-12 gap-4 md:gap-6">
-//       <div className="col-span-12 space-y-6 xl:col-span-7">
-//         <EcommerceMetrics />
+    // 401 → token invalid / expired
+    if (res.status === 401) return false;
 
-//         <MonthlySalesChart />
-//       </div>
+    return true;
+  } catch {
+    return false;
+  }
+}
 
-//       <div className="col-span-12 xl:col-span-5">
-//         <MonthlyTarget />
-//       </div>
+// 🔐 Secure server component
+export default async function Dashboard() {
+  // 1️⃣ Get token from cookies (server-side)
+  const token = (await cookies()).get("auth_token")?.value;
 
-//       <div className="col-span-12">
-//         <StatisticsChart />
-//       </div>
+  // 2️⃣ No token → redirect to login
+  if (!token) {
+    redirect("/Login");
+  }
 
-//       <div className="col-span-12 xl:col-span-5">
-//         <DemographicCard />
-//       </div>
+  // 3️⃣ Validate token with backend
+  const isValid = await validateToken(token);
+  if (!isValid) {
+    redirect("/Login");
+  }
 
-//       <div className="col-span-12 xl:col-span-7">
-//         <RecentOrders />
-//       </div>
-//     </div>
-//   );
-// }
-
-// import MetricsCards from '@/components/MetricsCards';
-// import MessageActivity from '@/components/MessageActivity';
-// import Notifications from '@/components/Notifications';
-// import QuickActions from '@/components/QuickActions';
-// import UserManagement from '@/components/UserManagement';
-
-export default function Dashboard() {
+  // 4️⃣ Token valid → render dashboard
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
-      <p className="text-gray-600 mb-6">Monitor your chat application metrics and user activity</p>
+      <p className="text-gray-600 mb-6">
+        Monitor your chat application metrics and user activity
+      </p>
 
       {/* Metrics Cards */}
       <MetricsCards />

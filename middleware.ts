@@ -4,83 +4,56 @@ import type { NextRequest } from 'next/server';
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow access to login page
+  // 1️⃣ Always allow static files / images / favicon
+  if (
+    pathname.startsWith('/_next') ||
+    pathname === '/favicon.ico'
+  ) {
+    return NextResponse.next();
+  }
+
+  // 2️⃣ Allow login page without auth
   if (pathname === '/Login') {
     return NextResponse.next();
   }
 
-  // Handle static files (_next/static, _next/image, favicon.ico)
-  if (pathname.startsWith('/_next/static') || pathname.startsWith('/_next/image') || pathname === '/favicon.ico') {
-    const token = request.cookies.get('auth_token');
-    if (!token) {
-      // Allow if referer is login page (to load static files for login)
-      const referer = request.headers.get('referer');
-      if (referer && referer.includes('/Login')) {
-        return NextResponse.next();
-      } else {
-        // Return 401 if no token and not from login page
-        return new NextResponse('Unauthorized', { status: 401 });
-      }
-    } else {
-      // Validate token
-      try {
-        const response = await fetch('https://apps.ekarigar.com/backend/admin/users', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        if (response.status === 401) {
-          // Token is invalid or expired, return 401
-          return new NextResponse('Unauthorized', { status: 401 });
-        }
-      } catch (error) {
-        // If validation fails (e.g., network error), return 401
-        return new NextResponse('Unauthorized', { status: 401 });
-      }
-      // Allow if token is valid
-      return NextResponse.next();
-    }
-  }
+  // 3️⃣ From here, we are dealing with protected pages like /analytics
 
-  // Check for auth_token cookie for other paths
-  const token = request.cookies.get('auth_token');
+  const token = request.cookies.get('auth_token')?.value;
 
   if (!token) {
-    // Redirect to login if no token
+    // No token → redirect to login
     return NextResponse.redirect(new URL('/Login', request.url));
   }
 
-  // Validate token by making a request to a protected endpoint
+  // Optional: validate token with backend
   try {
     const response = await fetch('https://apps.ekarigar.com/backend/admin/users', {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
+      cache: 'no-store',
     });
 
     if (response.status === 401) {
-      // Token is invalid or expired, redirect to login
+      // Invalid/expired token → redirect to login
       return NextResponse.redirect(new URL('/Login', request.url));
     }
   } catch (error) {
-    // If validation fails (e.g., network error), redirect to login
+    // Backend unreachable → treat as unauthenticated
     return NextResponse.redirect(new URL('/Login', request.url));
   }
 
-  // Allow access if token is valid
+  // Token valid → continue to page
   return NextResponse.next();
 }
 
+// Only run middleware for pages you want to protect
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     */
-    '/((?!api).*)',
+    '/analytics/:path*', // protect analytics
+    // add more protected routes here, e.g. '/dashboard/:path*'
   ],
 };

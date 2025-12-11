@@ -1,13 +1,52 @@
+
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { Metadata } from "next";
-import React from "react";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
+// ✅ Page metadata
 export const metadata: Metadata = {
   title: "Next.js Blank Page | TailAdmin - Next.js Dashboard Template",
   description: "This is Next.js Blank Page TailAdmin Dashboard Template",
 };
 
-export default function BlankPage() {
+async function validateToken(token: string) {
+  try {
+    const res = await fetch("https://apps.ekarigar.com/backend/admin/users", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      cache: "no-store", // always fresh, don't cache auth check
+    });
+
+    // 401 => invalid / expired token
+    if (res.status === 401) return false;
+
+    return true;
+  }  catch {
+    return false;
+  }
+}
+
+// ✅ Secure server component
+export default async function BlankPage() {
+  // 1️⃣ Read token from cookies (server-side)
+  const token = (await cookies()).get("auth_token")?.value;
+
+  // 2️⃣ No token → redirect to /Login
+  if (!token) {
+    redirect("/Login");
+  }
+
+  // 3️⃣ Validate token with backend
+  const isValid = await validateToken(token);
+  if (!isValid) {
+    redirect("/Login");
+  }
+
+  // 4️⃣ Token is valid → render page
   return (
     <div>
       <PageBreadcrumb pageTitle="Blank Page" />
@@ -18,7 +57,7 @@ export default function BlankPage() {
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 sm:text-base">
             Start putting content on grids or panels, you can also use different
-            combinations of grids.Please check out the dashboard and other pages
+            combinations of grids. Please check out the dashboard and other pages
           </p>
         </div>
       </div>

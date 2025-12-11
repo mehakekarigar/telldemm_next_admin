@@ -1,6 +1,6 @@
 
 import axios from "axios";
-import Cookies from "js-cookie"; // Make sure this is installed: npm i js-cookie
+import Cookies from "js-cookie"; 
 import { ReactNode } from "react";
 
 // Create axios instance
