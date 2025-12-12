@@ -22,6 +22,7 @@ export type Channel = {
   channel_dp: string | null;
   is_public: number;
   max_members: number;
+  total_members :number,
   delete_status: number;
   deleted_at: string | null;
   creator_name: string;
@@ -91,11 +92,11 @@ export const columns: ColumnDef<Channel>[] = [
     header: "Created By",
   },
   {
-    accessorKey: "max_members",
-    header: "Max Members",
+    accessorKey: "total_members",
+    header: "Total Members",
     cell: ({ row, table }) => {
       const channelId = row.original.channel_id;
-      const maxMembers = row.original.max_members;
+      const totalMembers = row.original.total_members;
       const onMemberCountClick = table.options.meta?.onMemberCountClick;
 
       return (
@@ -108,7 +109,7 @@ export const columns: ColumnDef<Channel>[] = [
           }}
           disabled={!onMemberCountClick}
         >
-          {maxMembers}
+          {totalMembers}
         </button>
       );
     },

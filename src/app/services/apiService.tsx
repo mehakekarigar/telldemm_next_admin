@@ -199,21 +199,45 @@ export type Channel = {
   channel_dp: string | null;
   is_public: number;
   max_members: number;
+  total_members :number;
   delete_status: number;
   deleted_at: string | null;
 };
 
-export type ChannelMember = {
-  id: number;
+// --- Channel & ChannelMember types (updated to match API response) ---
+export type ChannelInfo = {
   channel_id: number;
+  channel_name: string;
+  channel_dp: string | null;
+};
+
+export type ChannelMember = {
+  member_id: number;
   user_id: number;
   role_id: number;
   joined_at: string;
   is_active: number;
-  removed_at: string | null;
-  name: string;
   email: string | null;
+  name: string;
+  removed_at: string | null;
+  role_name: string;
 };
+
+// Optional combined response type for convenience
+export type ChannelMembersResponse = {
+  channelInfo?: ChannelInfo;
+  members: ChannelMember[];
+  pagination?: {
+    page: number;
+    limit: number;
+    totalPages?: number;
+    totalCount?: number;
+  };
+};
+
+
+
+// export type 
 
 // Add this type near your other interfaces
 export interface ForceLogoutResponse {
@@ -436,19 +460,67 @@ export const fetchChannelDetail = async (channelId: number): Promise<Channel> =>
 };
 
 // Fetch channel members with pagination
-export const fetchChannelMembers = async (channelId: number, page: number = 1, limit: number = 15): Promise<{ members: ChannelMember[]; pagination: { page: number; limit: number; totalPages: number; totalCount: number } }> => {
+// --- fetchChannelMembers: parse API response { channelInfo, members, pagination } ---
+export const fetchChannelMembers = async (
+  channelId: number,
+  page: number = 1,
+  limit: number = 15
+): Promise<ChannelMembersResponse> => {
   try {
     const response = await apiClient.get(`${BASE_URL}/channels/${channelId}/members?page=${page}&limit=${limit}`, {
       headers: getAuthHeaders(),
     });
 
     const data = response.data;
+
+    let channelInfo: ChannelInfo | undefined = undefined;
+    let members: ChannelMember[] = [];
+    let pagination: ChannelMembersResponse['pagination'] | undefined = undefined;
+
+    if (data) {
+      if (data.channelInfo) {
+        channelInfo = data.channelInfo as ChannelInfo;
+      }
+
+      // members might be at data.members or data.data.members etc. Try common locations:
+      if (Array.isArray(data.members)) {
+        members = data.members as ChannelMember[];
+      } else if (Array.isArray(data.data?.members)) {
+        members = data.data.members as ChannelMember[];
+      } else if (Array.isArray(data.data)) {
+        // sometimes API returns wrapped data array directly
+        members = data.data as ChannelMember[];
+      } else if (Array.isArray(data)) {
+        members = data as ChannelMember[];
+      }
+
+      // pagination
+      if (data.pagination) {
+        pagination = {
+          page: data.pagination.page ?? page,
+          limit: data.pagination.limit ?? limit,
+          totalPages: data.pagination.totalPages ?? data.pagination.totalPages,
+          totalCount: data.pagination.totalCount ?? data.pagination.totalCount,
+        };
+      } else if (data.data?.pagination) {
+        pagination = {
+          page: data.data.pagination.page ?? page,
+          limit: data.data.pagination.limit ?? limit,
+          totalPages: data.data.pagination.totalPages,
+          totalCount: data.data.pagination.totalCount,
+        };
+      }
+    }
+
     return {
-      members: data.members,
-      pagination: data.pagination,
+      channelInfo,
+      members,
+      pagination,
     };
   } catch (error) {
     console.error(`Error fetching members for channel ${channelId}:`, error);
     throw error;
   }
 };
+
+

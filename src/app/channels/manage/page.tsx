@@ -32,6 +32,7 @@ export default function ChannelTablePage() {
           channel_dp: apiChannel.channel_dp,
           is_public: apiChannel.is_public,
           max_members: apiChannel.max_members,
+          total_members :apiChannel.total_members,
           delete_status: apiChannel.delete_status,
           deleted_at: apiChannel.deleted_at,
         })) as Channel[];

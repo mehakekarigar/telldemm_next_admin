@@ -1,32 +1,68 @@
+// channels/[id]/members/page.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import { fetchChannelMembers, ChannelMember } from "../../../services/apiService";
+import Image from "next/image";
+import { DataTable } from "@/components/ui/data-table/data-table";
+import { fetchChannelMembers, ChannelMembersResponse } from "../../../services/apiService";
+
+type TableMember = {
+  id: number; // maps from member_id
+  channel_id: number;
+  user_id: number;
+  role_id: number;
+  joined_at: string;
+  is_active: number;
+  removed_at: string | null;
+  name: string;
+  email: string | null;
+};
 
 export default function ChannelMembersPage() {
   const params = useParams();
   const channelId = parseInt(params.id as string, 10);
 
-  const [members, setMembers] = useState<ChannelMember[]>([]);
+  const [members, setMembers] = useState<TableMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState<number>(1);
-  const [limit] = useState<number>(15);
-  const [pagination, setPagination] = useState<{ page: number; limit: number; totalPages: number; totalCount: number } | null>(null);
+
+  // channel info for UI (name + dp)
+  const [channelName, setChannelName] = useState<string | null>(null);
+  const [channelDp, setChannelDp] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
-    const loadMembers = async () => {
+    const loadChannelMembers = async () => {
       setLoading(true);
       setError(null);
+
       try {
-        const res = await fetchChannelMembers(channelId, page, limit);
+        const response: ChannelMembersResponse = await fetchChannelMembers(channelId, 1, 15);
+
+        // set channel info for UI
         if (!cancelled) {
-          setMembers(res.members || []);
-          setPagination(res.pagination || null);
+          setChannelName(response.channelInfo?.channel_name ?? null);
+          setChannelDp(response.channelInfo?.channel_dp ?? null);
+        }
+
+        // Map API members to TableMember shape
+        const mappedMembers: TableMember[] = (response.members || []).map((apiMember) => ({
+          id: apiMember.member_id,
+          channel_id: response.channelInfo?.channel_id ?? channelId,
+          user_id: apiMember.user_id,
+          role_id: apiMember.role_id,
+           role_name: apiMember.role_name,
+          joined_at: apiMember.joined_at,
+          is_active: apiMember.is_active,
+          removed_at: apiMember.removed_at,
+          name: apiMember.name,
+          email: apiMember.email,
+        }));
+
+        if (!cancelled) {
+          setMembers(mappedMembers);
         }
       } catch (err) {
         console.error(err);
@@ -36,107 +72,127 @@ export default function ChannelMembersPage() {
       }
     };
 
-    if (channelId) loadMembers();
+    if (channelId && !Number.isNaN(channelId)) {
+      loadChannelMembers();
+    } else {
+      setLoading(false);
+      setError("Invalid channel id.");
+    }
 
     return () => {
       cancelled = true;
     };
-  }, [channelId, page, limit]);
+  }, [channelId]);
+
+  type CellProps = {
+  row: {
+    index: number;
+    original: TableMember;
+  };
+};
+
+const memberColumns = [
+  {
+    id: "sequential_id",
+    header: "S.No",
+    cell: ({ row }: CellProps) => row.index + 1,
+    enableSorting: false,
+  },
+  {
+    accessorKey: "name",
+    header: "Name",
+  },
+  {
+    accessorKey: "email",
+    header: "Email",
+  },
+  {
+    accessorKey: "user_id",
+    header: "User ID",
+  },
+  {
+    accessorKey: "role_id",
+    header: "Role ID",
+  },
+  {
+    accessorKey: "role_name",
+    header: "Role Name",
+  },
+  {
+    accessorKey: "channel_id",
+    header: "Channel ID",
+  },
+  {
+    accessorKey: "removed_at",
+    header: "Removed At",
+  },
+  {
+    accessorKey: "joined_at",
+    header: "Joined At",
+    cell: ({ row }: CellProps) => {
+      const ts = row.original.joined_at;
+      const d = ts ? new Date(ts) : null;
+      if (!d) return "Never";
+      try {
+        return d.toLocaleString();
+      } catch {
+        return "Invalid date";
+      }
+    },
+  },
+  {
+    accessorKey: "is_active",
+    header: "Active",
+    cell: ({ row }: CellProps) => (row.original.is_active ? "Yes" : "No"),
+  },
+];
 
   return (
     <div>
-      <PageBreadcrumb pageTitle="Channel Members" />
+      {/* <PageBreadcrumb pageTitle="Channel Members" /> */}
       <div className="min-h-screen rounded-2xl border border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="mx-auto w-full max-w-[1440px]">
-          <h3 className="mb-4 font-semibold text-gray-800 text-theme-xl dark:text-white/90 sm:text-2xl">
+          <h3 className="mb-2 font-semibold text-gray-800 text-theme-xl dark:text-white/90 sm:text-2xl">
             Channel Members
           </h3>
 
+        
+<div className="mb-6 flex items-center gap-3">
+  {channelDp ? (
+    <div className="h-16 w-16 overflow-hidden rounded-full border">
+      <Image
+        src={channelDp}
+        alt="Channel DP"
+        width={64}
+        height={64}
+        className="h-full w-full object-cover"
+      />
+    </div>
+  ) : (
+    <div className="flex h-16 w-16 items-center justify-center rounded-full border bg-gray-100 text-sm">
+      {channelName ? channelName.slice(0, 2).toUpperCase() : "CH"}
+    </div>
+  )}
+
+  <div>
+    <div className="text-lg font-medium text-gray-700 dark:text-white">
+      {channelName ?? `Channel #${channelId}`}
+    </div>
+    <div className="text-sm text-gray-500">{members.length} member(s)</div>
+  </div>
+</div>
+
+
+
           {loading ? (
-            <p>Loading members...</p>
+            <p>Loading...</p>
           ) : error ? (
             <p className="text-red-500">{error}</p>
-          ) : members.length === 0 ? (
-            <p>No members found.</p>
           ) : (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {members.map((m) => (
-                  <div key={m.user_id} className="rounded-lg border p-4 bg-white shadow-sm dark:bg-gray-900">
-                    <div className="mb-2">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
-                      <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">{ m.name || "—"}</p>
-                    </div>
-
-                    <div className="mb-2">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-                      <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">{m.email ?? "—"}</p>
-                    </div>
-
-                    <div className="mb-2">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Channel Id</label>
-                      <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">{m.channel_id}</p>
-                    </div>
-
-                    <div className="mb-2">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">User Id</label>
-                      <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">{m.user_id}</p>
-                    </div>
-
-                    <div className="mb-2">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Role Id</label>
-                      <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">{m.role_id}</p>
-                    </div>
-
-                    <div className="mb-2">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Removed At</label>
-                      <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">{m.removed_at}</p>
-                    </div>
-
-                    <div className="mb-2">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Joined At</label>
-                      <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">{m.joined_at ? new Date(m.joined_at).toLocaleString() : "—"}</p>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Active</label>
-                      <p className="mt-1 text-sm text-gray-900 dark:text-gray-100">{m.is_active ? "Yes" : "No"}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-4 flex items-center justify-between">
-                <div className="text-sm text-gray-600">
-                  Showing page {pagination?.page ?? page} of {pagination?.totalPages ?? "?"} — total {pagination?.totalCount ?? members.length}
-                </div>
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page <= 1}
-                    className="px-3 py-1 rounded border bg-white disabled:opacity-50"
-                  >
-                    Prev
-                  </button>
-                  <button
-                    onClick={() => setPage((p) => p + 1)}
-                    disabled={pagination ? page >= pagination.totalPages : members.length < limit}
-                    className="px-3 py-1 rounded border bg-white disabled:opacity-50"
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            </>
+            <DataTable columns={memberColumns} data={members} />
           )}
         </div>
       </div>
     </div>
   );
 }
-
-
-
-
-
