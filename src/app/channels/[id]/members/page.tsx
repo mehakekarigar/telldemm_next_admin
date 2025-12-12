@@ -123,10 +123,6 @@ const memberColumns = [
     header: "Channel ID",
   },
   {
-    accessorKey: "removed_at",
-    header: "Removed At",
-  },
-  {
     accessorKey: "joined_at",
     header: "Joined At",
     cell: ({ row }: CellProps) => {
@@ -144,6 +140,10 @@ const memberColumns = [
     accessorKey: "is_active",
     header: "Active",
     cell: ({ row }: CellProps) => (row.original.is_active ? "Yes" : "No"),
+  },
+    {
+    accessorKey: "removed_at",
+    header: "Removed At",
   },
 ];
 
