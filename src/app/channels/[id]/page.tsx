@@ -6,6 +6,8 @@ import { useParams } from "next/navigation";
 import Image from "next/image";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import { fetchChannelDetail, Channel } from "../../services/apiService";
+import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 
 export default function ChannelDetailPage() {
   const params = useParams();
@@ -14,6 +16,7 @@ export default function ChannelDetailPage() {
   const [channel, setChannel] = useState<Channel | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     let cancelled = false;
@@ -92,6 +95,20 @@ export default function ChannelDetailPage() {
   return (
     <div>
       <PageBreadcrumb pageTitle="Channel Detail" />
+      <button
+  onClick={() => {
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/channels");
+    }
+  }}
+  className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+>
+  <ArrowLeft className="h-4 w-4" />
+  Back
+</button>
+
       <div className="min-h-screen rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="mx-auto w-full max-w-[1100px]">
           <header className="mb-6 rounded-xl bg-gradient-to-r from-white to-slate-50 p-6 shadow-sm dark:from-gray-900 dark:to-gray-800">
@@ -235,7 +252,7 @@ export default function ChannelDetailPage() {
 
       {/* Delete Status */}
       <div className="flex flex-col gap-1">
-        <span className="text-xs text-gray-400 dark:text-gray-500">Delete Status</span>
+        <span className="text-xs text-gray-400 dark:text-gray-500">Status</span>
         <div className="mt-1">
           <span
             className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
@@ -244,7 +261,7 @@ export default function ChannelDetailPage() {
                 : "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300"
             }`}
           >
-            {channel.delete_status ? "Deleted" : "Active"}
+            {channel.delete_status ? "Active" : "Deleted"}
           </span>
         </div>
       </div>

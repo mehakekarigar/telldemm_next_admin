@@ -6,6 +6,8 @@ import { useParams } from "next/navigation";
 import Image from "next/image";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { fetchChannelMembers, ChannelMembersResponse } from "../../../services/apiService";
+import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 
 type TableMember = {
   id: number; // maps from member_id
@@ -30,6 +32,7 @@ export default function ChannelMembersPage() {
   // channel info for UI (name + dp)
   const [channelName, setChannelName] = useState<string | null>(null);
   const [channelDp, setChannelDp] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     let cancelled = false;
@@ -149,6 +152,20 @@ const memberColumns = [
 
   return (
     <div>
+      <button
+  onClick={() => {
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/channels");
+    }
+  }}
+  className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+>
+  <ArrowLeft className="h-4 w-4" />
+  Back
+</button>
+
       {/* <PageBreadcrumb pageTitle="Channel Members" /> */}
       <div className="min-h-screen rounded-2xl border border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="mx-auto w-full max-w-[1440px]">
