@@ -58,7 +58,7 @@ export default function ChannelTablePage() {
 
   return (
     <div>
-      <PageBreadcrumb pageTitle="Channel Table" />
+      <PageBreadcrumb pageTitle="Channels" />
       <div className="min-h-screen rounded-2xl border border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="mx-auto w-full max-w-[1440px]">
           <h3 className="mb-4 font-semibold text-gray-800 text-theme-xl dark:text-white/90 sm:text-2xl">Channels</h3>

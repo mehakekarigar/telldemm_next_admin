@@ -94,7 +94,10 @@ export default function ChannelDetailPage() {
 
   return (
     <div>
-      <PageBreadcrumb pageTitle="Channel Detail" />
+      <PageBreadcrumb
+  pageTitle="Channel Detail"
+  parent={{ label: "Channels", href: "/channels/manage" }}
+/>
       <button
   onClick={() => {
     if (window.history.length > 1) {
@@ -261,7 +264,7 @@ export default function ChannelDetailPage() {
                 : "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300"
             }`}
           >
-            {channel.delete_status ? "Active" : "Deleted"}
+            {channel.delete_status ? "Deleted" : "Active"}
           </span>
         </div>
       </div>
