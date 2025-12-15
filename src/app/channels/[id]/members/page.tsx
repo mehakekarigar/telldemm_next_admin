@@ -168,7 +168,7 @@ const memberColumns = [
 </button>
 
      <PageBreadcrumb
-  pageTitle="Channel Detail"
+  pageTitle="Channel Members"
   parent={{ label: "Channels", href: "/channels/manage" }}
 />
 
